@@ -9,10 +9,13 @@ import tensorflow as tf
 from werkzeug.utils import secure_filename
 from ultralytics import YOLO
 
-app = Flask(__name__)
+app = Flask(_name_)
 
 # Initialize CORS
 CORS(app)
+
+# Ensure YOLO and TensorFlow run on CPU
+os.environ['CUDA_VISIBLE_DEVICES'] = ''  # Disables GPU usage
 
 # Load the TensorFlow model at startup for forgery detection
 MODEL_PATH = 'ForgeryTestFinalCNN.keras'
@@ -23,8 +26,8 @@ except Exception as e:
     print(f"Error loading forgery detection model: {e}")
     forgery_model = None
 
-# Load the YOLOv8 model for object detection
-yolo_model = YOLO('lastCombinedAug.pt')
+# Load the YOLOv8 model for object detection and specify 'cpu' as the device
+yolo_model = YOLO('lastCombinedAug.pt', device='cpu')
 
 def perform_ela(image_path, output_path, quality=90):
     try:
@@ -165,55 +168,4 @@ def process_image():
 
             # If forgery is detected, perform YOLO inference and format bounding box data
             if confidence_score < 0.5:
-                # YOLO inference on the saved ELA image
-                yolo_results = perform_yolo_inference(saved_ela_image_path)
-                if yolo_results is None:
-                    return jsonify({'error': 'YOLO inference failed.'}), 500
-
-                # Extract bounding box locations and convert them to the desired format
-                locations = []
-                for result in yolo_results:
-                    boxes = result.boxes.xyxy  # xyxy format for bounding boxes
-                    for box in boxes:
-                        x1, y1, x2, y2 = map(int, box)
-                        width = x2 - x1
-                        height = y2 - y1
-                        locations.append([x1, y1, width, height])
-
-                # Response when forgery is detected, including locations of bounding boxes
-                response = {
-                    'is_forged': True,
-                    'location': locations
-                }
-            else:
-                # Response when no forgery is detected
-                response = {
-                    'is_forged': False,
-                    'location': []
-                }
-
-            # Clean up temporary files
-            os.remove(file_path)
-            os.remove(saved_ela_image_path)
-
-            return jsonify(response), 200
-
-        except Exception as e:
-            print(f"Error processing image: {e}")
-            return jsonify({'error': 'Internal server error.'}), 500
-
-    return jsonify({'error': 'Invalid request.'}), 400
-
-@app.route('/')
-def index():
-    return """
-    <h1>Image Forgery Detection and YOLO API</h1>
-    <p>Use the <code>/detect-forgery</code> endpoint to upload an image and get predictions.</p>
-    <p>Example using <code>curl</code>:</p>
-    <pre>
-    curl -X POST -F "image=@path_to_image.jpg" http://localhost:5000/detect-forgery
-    </pre>
-    """
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+                # YOLO inferenc
