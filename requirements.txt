@@ -1,7 +1,7 @@
 Flask
 numpy
 tensorflow
-opencv-python-headless
+opencv-python-headless==4.6.0.66
 Werkzeug==2.3.7
 gunicorn
 flask-cors
